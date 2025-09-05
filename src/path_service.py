@@ -1,18 +1,23 @@
 import pandas as pd
 import networkx as nx
-import math
+import os
 import random
+import math
 
+# Define constants for pathfinding weights
+SAFE_WEIGHT = 'safety_cost'
+SHORTEST_WEIGHT = 'length'
+BALANCED_WEIGHT = 'hybrid_weight'
+
+# Load the graph and add safety scores
 def create_pathfinding_model(graphml_file, nodes_csv_file):
     """
     Load graph and node data, and add safety scores to the graph.
-    Returns a graph with safety scores and length as node and edge attributes.
+    Returns a graph with safety scores as node attributes.
     """
     try:
+        # Load the graph and node data
         G = nx.read_graphml(graphml_file)
-        # Check if the graph is a multigraph and adjust accordingly
-        is_multigraph = G.is_multigraph()
-
         df_nodes = pd.read_csv(nodes_csv_file)
 
         # Normalize the safety score to a 100-point scale
@@ -26,23 +31,33 @@ def create_pathfinding_model(graphml_file, nodes_csv_file):
         df_nodes['osmid_str'] = df_nodes['osmid'].astype(str)
         df_nodes.set_index('osmid_str', inplace=True)
 
-        # Add safety scores and coordinates to the graph nodes
-        for node in G.nodes():
-            if node in df_nodes.index:
-                G.nodes[node]['safety_score'] = df_nodes.loc[node, 'safety_score_100']
-                G.nodes[node]['lat'] = df_nodes.loc[node, 'y']
-                G.nodes[node]['lon'] = df_nodes.loc[node, 'x']
+        # Add safety scores, coordinates, and other attributes to the graph nodes
+        for node_id, data in G.nodes(data=True):
+            if node_id in df_nodes.index:
+                G.nodes[node_id]['safety_score'] = df_nodes.loc[node_id, 'safety_score_100']
+                G.nodes[node_id]['lat'] = df_nodes.loc[node_id, 'y']
+                G.nodes[node_id]['lon'] = df_nodes.loc[node_id, 'x']
             else:
-                G.nodes[node]['safety_score'] = 0
-                G.nodes[node]['lat'] = None
-                G.nodes[node]['lon'] = None
+                # Assign a default safety score for nodes not in the CSV
+                G.nodes[node_id]['safety_score'] = 0
+                G.nodes[node_id]['lat'] = None
+                G.nodes[node_id]['lon'] = None
 
-        # Add 'length' attribute to edges if not present (assuming it's in meters)
+        # Add weights to edges
         for u, v, data in G.edges(data=True):
-            if 'length' not in data:
-                data['length'] = 1 # Default length if not available
+            v_safety_score = G.nodes[v]['safety_score']
 
-        G.is_multigraph = lambda: is_multigraph
+            # --- WEIGHT CALCULATION ---
+            # Safe Path Weight: A very aggressive penalty for lower scores
+            # Using 1 / (score + small_epsilon) to heavily favor high-score nodes
+            data['safe_only_weight'] = 1 / (v_safety_score + 1e-6)
+
+            # Shortest Path Weight: Purely based on length
+            data['shortest_only_weight'] = data.get('length', 1)
+
+            # Balanced Path Weight:
+            # 안전 점수(safe_only_weight)와 길이를 1:9 비율로 섞어 안전 점수가 낮도록 유도
+            data[BALANCED_WEIGHT] = (data['safe_only_weight'] * 0.1) + (data['shortest_only_weight'] * 0.9)
 
     except FileNotFoundError as e:
         print(f"Error: File not found - {e}")
@@ -55,113 +70,123 @@ def create_pathfinding_model(graphml_file, nodes_csv_file):
 
 def find_closest_node(G, lat, lon):
     """
-    Find the closest node in the graph to the given latitude and longitude.
+    Finds the node in the graph closest to the given coordinates.
     """
-    nodes = nx.get_node_attributes(G, 'lat')
-    min_dist = float('inf')
     closest_node = None
-    for node_id, node_lat in nodes.items():
-        node_lon = G.nodes[node_id]['lon']
-        if node_lat is not None and node_lon is not None:
-            dist = math.sqrt((node_lat - lat)**2 + (node_lon - lon)**2)
+    min_dist = float('inf')
+
+    for node_id, data in G.nodes(data=True):
+        if 'lat' in data and 'lon' in data:
+            dist = math.sqrt((data['lat'] - lat)**2 + (data['lon'] - lon)**2)
             if dist < min_dist:
                 min_dist = dist
                 closest_node = node_id
     return closest_node
 
-def find_paths_circular(G, start_node, desired_distance_km, max_attempts=1000):
+def find_paths_circular(G, start_node_id, desired_distance_km):
     """
-    Find three distinct circular paths (safe, shortest, balanced) of a specific length.
+    Finds three distinct circular paths (safe, shortest, balanced) of a given distance.
+    Returns a dictionary with formatted path data.
     """
-    if start_node not in G:
-        print("Error: Start node not in graph.")
-        return {}
+    if start_node_id not in G:
+        raise ValueError("Start node not found in the graph.")
 
-    paths = {}
+    desired_distance_m = desired_distance_km * 1000
 
-    target_path_length_m = desired_distance_km * 1000
+    # Define weight functions for A* algorithm
+    def safe_weight(u, v, data):
+        return data.get('safe_only_weight', float('inf'))
 
-    found_paths = {
-        'safe': None,
-        'shortest': None,
-        'balanced': None
+    def shortest_weight(u, v, data):
+        return data.get('shortest_only_weight', float('inf'))
+
+    def balanced_weight(u, v, data):
+        return data.get(BALANCED_WEIGHT, float('inf'))
+
+    weights = {
+        'safe': safe_weight,
+        'shortest': shortest_weight,
+        'balanced': balanced_weight
     }
 
-    def get_edge_data(u, v):
-        if G.is_multigraph():
-            # Assumes the GraphML data has a 'key' attribute for multigraphs
-            return G.get_edge_data(u, v)[0]
-        else:
-            return G.get_edge_data(u, v)
+    found_paths = {}
+    path_types = ['safe', 'shortest', 'balanced']
 
-    # Try to find a path within a certain distance tolerance
-    for attempt in range(max_attempts):
-        end_node = random.choice(list(G.nodes()))
+    # Keep track of found paths to ensure they are unique
+    unique_paths = set()
 
-        # Safe Path
-        if not found_paths['safe']:
-            for u, v in G.edges():
-                edge_data = get_edge_data(u, v)
-                edge_data['safe_cost'] = 101 - G.nodes[v]['safety_score']
-            try:
-                path = nx.shortest_path(G, source=start_node, target=end_node, weight='safe_cost')
-                path_length_m = sum(get_edge_data(u, v)['length'] for u, v in zip(path[:-1], path[1:]))
-                if abs(path_length_m - target_path_length_m) < target_path_length_m * 0.2:
-                    found_paths['safe'] = path + path[::-1][1:] # Make it circular
-            except nx.NetworkXNoPath:
-                pass
+    # Find three paths
+    for path_type in path_types:
+        path = None
+        attempts = 0
+        while path is None and attempts < 10:
+            # Find a random intermediate node to form a circular path
+            candidate_nodes = list(G.nodes)
+            random.shuffle(candidate_nodes)
 
-        # Shortest Path
-        if not found_paths['shortest']:
-            try:
-                path = nx.shortest_path(G, source=start_node, target=end_node, weight='length')
-                path_length_m = sum(get_edge_data(u, v)['length'] for u, v in zip(path[:-1], path[1:]))
-                if abs(path_length_m - target_path_length_m) < target_path_length_m * 0.2:
-                    circular_path = path + path[::-1][1:]
-                    if not found_paths['safe'] or circular_path != found_paths['safe']:
-                        found_paths['shortest'] = circular_path
-            except nx.NetworkXNoPath:
-                pass
+            for intermediate_node in candidate_nodes:
+                if intermediate_node == start_node_id:
+                    continue
 
-        # Balanced Path
-        if not found_paths['balanced']:
-            for u, v in G.edges():
-                edge_data = get_edge_data(u, v)
-                safe_cost = 101 - G.nodes[v]['safety_score']
-                shortest_cost = edge_data.get('length', 1)
-                edge_data['balanced_cost'] = 0.5 * safe_cost + 0.5 * shortest_cost
-            try:
-                path = nx.shortest_path(G, source=start_node, target=end_node, weight='balanced_cost')
-                path_length_m = sum(get_edge_data(u, v)['length'] for u, v in zip(path[:-1], path[1:]))
-                if abs(path_length_m - target_path_length_m) < target_path_length_m * 0.2:
-                    circular_path = path + path[::-1][1:]
-                    if (not found_paths['safe'] or circular_path != found_paths['safe']) and \
-                            (not found_paths['shortest'] or circular_path != found_paths['shortest']):
-                        found_paths['balanced'] = circular_path
-            except nx.NetworkXNoPath:
-                pass
+                try:
+                    # Find path from start to intermediate
+                    path1 = nx.astar_path(G, source=start_node_id, target=intermediate_node, weight=weights[path_type])
 
-        if all(found_paths.values()):
-            break
+                    # Find path from intermediate back to start
+                    path2 = nx.astar_path(G, source=intermediate_node, target=start_node_id, weight=weights[path_type])
 
-    # Format the found paths for the API response
-    api_response = {"routes": []}
-    for path_type, path in found_paths.items():
+                    full_path = path1 + path2[1:]
+
+                    # Check if the path is a duplicate
+                    if tuple(full_path) in unique_paths:
+                        continue
+
+                    # Calculate total path length
+                    path_length_m = sum(G.get_edge_data(u, v)['length'] for u, v in zip(full_path[:-1], full_path[1:]))
+
+                    # Check if the distance is within an acceptable range (e.g., +/- 15%)
+                    if desired_distance_m * 0.85 <= path_length_m <= desired_distance_m * 1.15:
+                        path = full_path
+                        break
+
+                except nx.NetworkXNoPath:
+                    continue
+
+            attempts += 1
+            if path:
+                unique_paths.add(tuple(path))
+                found_paths[path_type] = path
+                break
+
+    return format_route_data(G, found_paths)
+
+def format_route_data(G, paths):
+    """
+    Formats the found paths into a list of dictionaries suitable for the API response.
+    """
+    routes = []
+
+    for path_type, path in paths.items():
         if path:
-            distance_m = sum(get_edge_data(u, v)['length'] for u, v in zip(path[:-1], path[1:]))
-            avg_safety_score = sum(G.nodes[node]['safety_score'] for node in path) / len(path)
+            distance_m = sum(G.get_edge_data(u, v)['length'] for u, v in zip(path[:-1], path[1:]))
+            distance_km = round(distance_m / 1000, 2)
 
-            # Placeholder for pace calculation. Should be handled by the API caller
-            estimated_time_min = (distance_m / 1000) * 6
+            # Calculate average safety score for the path
+            safety_scores = [G.nodes[node]['safety_score'] for node in path if 'safety_score' in G.nodes[node]]
+            avg_safety_score = round(sum(safety_scores) / len(safety_scores), 2) if safety_scores else 0
 
-            waypoints = [[G.nodes[node]['lat'], G.nodes[node]['lon']] for node in path]
+            # Extract waypoints
+            waypoints = []
+            for node_id in path:
+                node_data = G.nodes[node_id]
+                waypoints.append([node_data['lat'], node_data['lon']])
 
-            api_response['routes'].append({
+            routes.append({
                 "type": path_type,
-                "distance_km": round(distance_m / 1000, 2),
-                "safety_score": round(avg_safety_score, 2),
-                "estimated_time_min": round(estimated_time_min, 2),
+                "distance_km": distance_km,
+                "safety_score": avg_safety_score,
+                "estimated_time_min": 0, # To be calculated in app.py
                 "waypoints": waypoints
             })
 
-    return api_response
+    return {"routes": routes}

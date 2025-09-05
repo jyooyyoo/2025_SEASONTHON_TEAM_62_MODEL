@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_a16e731a56ad007e811bf5ae7b585237 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+</head>
+<body>
+    
+    
+            <div class="folium-map" id="map_a16e731a56ad007e811bf5ae7b585237" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_a16e731a56ad007e811bf5ae7b585237 = L.map(
+                "map_a16e731a56ad007e811bf5ae7b585237",
+                {
+                    center: [35.8514859, 128.5093038],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 13,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_83ec5874ebd9c170d6292dcecb11ef11 = L.tileLayer(
+                "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 20,
+  "maxNativeZoom": 20,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors \u0026copy; \u003ca href=\"https://carto.com/attributions\"\u003eCARTO\u003c/a\u003e",
+  "subdomains": "abcd",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_83ec5874ebd9c170d6292dcecb11ef11.addTo(map_a16e731a56ad007e811bf5ae7b585237);
+        
+    
+            var poly_line_63dbf67a7c9238321c59a75c9a14db47 = L.polyline(
+                [[35.8514859, 128.5093038], [35.8516757, 128.5078497], [35.852483, 128.5072348], [35.8540989, 128.5072909], [35.8541075, 128.5063584], [35.8547288, 128.5049614], [35.8547529, 128.5035724], [35.8554353, 128.5035849], [35.8554521, 128.5022342], [35.8554816, 128.4998643], [35.8535694, 128.4998305], [35.8535896, 128.4984568], [35.853636, 128.4955942], [35.8536598, 128.4940826], [35.8540454, 128.4940935], [35.8549724, 128.4941199], [35.8555762, 128.4941371], [35.8562162, 128.4941553], [35.8562089, 128.4945166], [35.8570629, 128.4945515], [35.8562089, 128.4945166], [35.8562162, 128.4941553], [35.8555762, 128.4941371], [35.8549724, 128.4941199], [35.8540454, 128.4940935], [35.8536598, 128.4940826], [35.853636, 128.4955942], [35.8535896, 128.4984568], [35.8535694, 128.4998305], [35.8554816, 128.4998643], [35.8554521, 128.5022342], [35.8554353, 128.5035849], [35.8547529, 128.5035724], [35.8547288, 128.5049614], [35.8541075, 128.5063584], [35.8540989, 128.5072909], [35.852483, 128.5072348], [35.8516757, 128.5078497], [35.8514859, 128.5093038]],
+                {"bubblingMouseEvents": true, "color": "green", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "green", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 6}
+            ).addTo(map_a16e731a56ad007e811bf5ae7b585237);
+        
+    
+            poly_line_63dbf67a7c9238321c59a75c9a14db47.bindTooltip(
+                `<div>
+                     
+        <b>경로 종류: Safe</b><br>
+        거리: 4.76 km<br>
+        안전 점수: 17.87점<br>
+        예상 시간: 28.56 분<br>
+        페이스: 6 분/km
+        
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var poly_line_4fd2db3f14dabfcfd1d9e89d36ab02e5 = L.polyline(
+                [[35.8514859, 128.5093038], [35.8513885, 128.5099031], [35.8507603, 128.5151964], [35.8506974, 128.5158296], [35.8506588, 128.5161734], [35.8503828, 128.5202314], [35.8495329, 128.5227428], [35.8493248, 128.5233536], [35.849412, 128.523641], [35.8498264, 128.5237667], [35.849992, 128.5247736], [35.8496029, 128.5254489], [35.8501453, 128.5285037], [35.8504989, 128.5306251], [35.8521544, 128.5306391], [35.8525761, 128.5306346], [35.8525829, 128.5318928], [35.8532009, 128.5318235], [35.8525829, 128.5318928], [35.8525761, 128.5306346], [35.8521544, 128.5306391], [35.8504989, 128.5306251], [35.8501453, 128.5285037], [35.8496029, 128.5254489], [35.849992, 128.5247736], [35.8498264, 128.5237667], [35.849412, 128.523641], [35.8493248, 128.5233536], [35.8495329, 128.5227428], [35.8503828, 128.5202314], [35.8506588, 128.5161734], [35.8506974, 128.5158296], [35.8507603, 128.5151964], [35.8513885, 128.5099031], [35.8514859, 128.5093038]],
+                {"bubblingMouseEvents": true, "color": "yellow", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "yellow", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 6}
+            ).addTo(map_a16e731a56ad007e811bf5ae7b585237);
+        
+    
+            poly_line_4fd2db3f14dabfcfd1d9e89d36ab02e5.bindTooltip(
+                `<div>
+                     
+        <b>경로 종류: Shortest</b><br>
+        거리: 4.88 km<br>
+        안전 점수: 6.58점<br>
+        예상 시간: 29.28 분<br>
+        페이스: 6 분/km
+        
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var poly_line_992ed577b85149c1fe75890a5bf49b6d = L.polyline(
+                [[35.8514859, 128.5093038], [35.8513885, 128.5099031], [35.8507603, 128.5151964], [35.8506974, 128.5158296], [35.8506588, 128.5161734], [35.8503828, 128.5202314], [35.8495329, 128.5227428], [35.8493248, 128.5233536], [35.8488119, 128.526287], [35.8494166, 128.5306626], [35.8492505, 128.530674], [35.8483113, 128.5306849], [35.847156, 128.5307047], [35.8483113, 128.5306849], [35.8492505, 128.530674], [35.8494166, 128.5306626], [35.8488119, 128.526287], [35.8493248, 128.5233536], [35.8495329, 128.5227428], [35.8503828, 128.5202314], [35.8506588, 128.5161734], [35.8506974, 128.5158296], [35.8507603, 128.5151964], [35.8513885, 128.5099031], [35.8514859, 128.5093038]],
+                {"bubblingMouseEvents": true, "color": "orange", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "orange", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 6}
+            ).addTo(map_a16e731a56ad007e811bf5ae7b585237);
+        
+    
+            poly_line_992ed577b85149c1fe75890a5bf49b6d.bindTooltip(
+                `<div>
+                     
+        <b>경로 종류: Balanced</b><br>
+        거리: 4.46 km<br>
+        안전 점수: 5.29점<br>
+        예상 시간: 26.76 분<br>
+        페이스: 6 분/km
+        
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_b70254bceeb079d877dde7b6a939377e = L.marker(
+                [35.8514859, 128.5093038],
+                {
+}
+            ).addTo(map_a16e731a56ad007e811bf5ae7b585237);
+        
+    
+            var icon_714ee34c5d9778a4f9c0ebff389e3926 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "play",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+            marker_b70254bceeb079d877dde7b6a939377e.bindTooltip(
+                `<div>
+                     출발/도착 지점
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_b70254bceeb079d877dde7b6a939377e.setIcon(icon_714ee34c5d9778a4f9c0ebff389e3926);
+            
+</script>
+</html>

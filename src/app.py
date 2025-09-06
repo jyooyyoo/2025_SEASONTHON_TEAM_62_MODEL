@@ -4,6 +4,9 @@ import json
 import os
 import sys
 
+application = Flask(__name__)
+
+
 # Add the parent directory to the system path to allow imports from `src`
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 

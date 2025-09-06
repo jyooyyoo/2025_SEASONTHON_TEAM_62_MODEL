@@ -1,12 +1,15 @@
 import pandas as pd
 import networkx as nx
 from flask import Flask, request, jsonify
+from flask_cors import CORS # 이 줄을 추가합니다.
 from path_service import create_pathfinding_model, find_closest_node, find_paths_circular
 from visualization import create_visualization
 import os
 import json
 
 app = Flask(__name__)
+CORS(app) # 이 줄을 추가하여 모든 도메인에서의 요청을 허용합니다.
+
 
 # Load the graph and safety score data once when the server starts
 DATA_DIR = 'data'
@@ -67,10 +70,11 @@ def recommend_routes():
     except Exception as e:
         return jsonify({"error": "An unexpected error occurred: " + str(e)}), 500
 
+
 if __name__ == '__main__':
     # Make sure data directory exists
     if not os.path.exists('data'):
         print("Error: 'data' directory not found. Please create it and place your data files inside.")
         exit()
 
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0') # 이 부분을 수정
